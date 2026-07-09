@@ -4,7 +4,8 @@ require "decidim/admin"
 require "decidim/api"
 require "decidim/participatory_processes"
 
-require "decidim/admin_api/version"`r`nrequire "decidim/admin_api/component_type"
+require "decidim/admin_api/version"
+require "decidim/admin_api/component_type"
 require "decidim/admin_api/mutation_extensions"
 require "decidim/admin_api/engine"
 
@@ -25,3 +26,4 @@ module Decidim
   module AdminApi
   end
 end
+
