@@ -3,6 +3,7 @@
 module Decidim
   module AdminApi
     class ComponentType < Decidim::Api::Types::BaseObject
+      graphql_name "AdminApiComponent"
       description "A Decidim component returned from admin API mutations."
 
       field :id, GraphQL::Types::ID, null: false
@@ -13,3 +14,6 @@ module Decidim
     end
   end
 end
+
+
+
