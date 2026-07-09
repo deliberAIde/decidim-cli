@@ -1,4 +1,4 @@
-﻿# decidim-cli
+# decidim-cli
 
 Command-line client for driving **Decidim** instances over the official GraphQL API.
 
@@ -32,10 +32,10 @@ Decidim exposes:
 - Open Data exports when the instance has generated them.
 
 Stock Decidim still does **not** expose process/space/component creation through the
-public API. This CLI therefore covers the whole official API surface it can reach, and
-keeps an explicit `decidim gql` escape hatch for version-specific fields and modules.
-Creating a participatory process itself remains the follow-on Decidim module/community
-work.
+public API. This repo now includes `decidim-admin-api/`, an installable Decidim engine
+that adds admin/operator GraphQL mutations over Decidim's own admin forms and command
+objects. Without that engine, the CLI still covers the official API surface and keeps
+`decidim gql` as an escape hatch for version-specific fields and modules.
 
 ## Design rules
 
@@ -64,8 +64,34 @@ decidim open-data normalize open-data.zip --out contributions.jsonl
 decidim proposal create|update|withdraw|vote|unvote|answer
 decidim meeting create|update|withdraw|close
 decidim debate create|update|close
-decidim process create|update|publish|phase-create|component-create
+decidim process create|update|publish|unpublish|phase-create|phase-update|phase-activate|component-create
+decidim component create|update|publish|unpublish
 ```
+
+
+## Admin API module
+
+To let the CLI create participatory processes, phases, and components, install the
+included Decidim engine in the target Decidim app:
+
+```ruby
+# Gemfile in the Decidim app
+gem "decidim-admin_api", path: "../decidim-cli/decidim-admin-api"
+```
+
+Then restart Decidim and authenticate the CLI as an admin API user. The module adds:
+
+```powershell
+decidim process create my-process "Mobility Plan" -p city --locale en
+decidim process phase-create PROCESS_ID "Ideation" 2026-09-01T00:00:00Z 2026-10-01T00:00:00Z -p city
+decidim component create PROCESS_ID proposals "Ideas" -p city --space-type participatory_processes
+decidim process publish PROCESS_ID -p city
+```
+
+Voca can still be useful one layer below this: its public material and `voca-tasks`
+show fast Decidim instance launch/configuration, DB setup, organization settings, and
+admin seeding. The missing part for our agent workflow is the admin content/provisioning
+API inside an instance, which is what `decidim-admin-api` supplies.
 
 ## Auth
 
@@ -102,5 +128,3 @@ decidim profile add city https://participate.example.gov --auth bearer --jwt-aud
 - API authentication: https://docs.decidim.org/en/develop/develop/api/authentication
 - Proposal mutations: https://docs.decidim.org/en/develop/develop/api/reference/components/proposals/create
 - Meeting mutations: https://docs.decidim.org/en/develop/develop/api/reference/components/meetings/create
-
-

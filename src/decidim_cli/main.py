@@ -1,4 +1,4 @@
-﻿"""decidim-cli - drive Decidim instances from the command line or an agent."""
+"""decidim-cli - drive Decidim instances from the command line or an agent."""
 
 from __future__ import annotations
 
@@ -22,7 +22,8 @@ open_data_app = typer.Typer(help="Download and normalize Decidim Open Data.", no
 proposal_app = typer.Typer(help="Proposal component mutations.", no_args_is_help=True)
 meeting_app = typer.Typer(help="Meeting component mutations.", no_args_is_help=True)
 debate_app = typer.Typer(help="Debate component mutations.", no_args_is_help=True)
-process_app = typer.Typer(help="Future/admin participatory process provisioning mutations.", no_args_is_help=True)
+process_app = typer.Typer(help="Admin participatory process provisioning mutations.", no_args_is_help=True)
+component_app = typer.Typer(help="Admin component provisioning mutations.", no_args_is_help=True)
 
 app.add_typer(profile_app, name="profile")
 app.add_typer(open_data_app, name="open-data")
@@ -30,6 +31,7 @@ app.add_typer(proposal_app, name="proposal")
 app.add_typer(meeting_app, name="meeting")
 app.add_typer(debate_app, name="debate")
 app.add_typer(process_app, name="process")
+app.add_typer(component_app, name="component")
 
 console = Console()
 err_console = Console(stderr=True)
@@ -96,6 +98,14 @@ def _input(locale: str | None, attributes: dict[str, Any], input_json: str | Non
     if locale:
         payload["locale"] = locale
     return payload
+
+
+def _with_input_fields(payload: dict[str, Any], **fields: Any) -> dict[str, dict[str, Any]]:
+    merged = dict(payload)
+    for key, value in fields.items():
+        if value is not None:
+            merged[key] = value
+    return {"input": merged}
 
 
 def _run_mutation(profile: str, query: str, variables: dict[str, Any]) -> None:
@@ -598,7 +608,7 @@ def process_update(
     _run_mutation(
         profile,
         mutations.UPDATE_PARTICIPATORY_PROCESS,
-        {"processId": process_id, "input": _read_json_arg(input_json)},
+        _with_input_fields(_read_json_arg(input_json), processId=process_id),
     )
 
 
@@ -608,7 +618,16 @@ def process_publish(
     profile: str = typer.Option("default", "--profile", "-p"),
 ):
     """Publish a participatory process when admin API mutations are installed."""
-    _run_mutation(profile, mutations.PUBLISH_PARTICIPATORY_PROCESS, {"processId": process_id})
+    _run_mutation(profile, mutations.PUBLISH_PARTICIPATORY_PROCESS, {"input": {"processId": process_id}})
+
+
+@process_app.command("unpublish")
+def process_unpublish(
+    process_id: str,
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Unpublish a participatory process when admin API mutations are installed."""
+    _run_mutation(profile, mutations.UNPUBLISH_PARTICIPATORY_PROCESS, {"input": {"processId": process_id}})
 
 
 @process_app.command("phase-create")
@@ -636,7 +655,36 @@ def process_phase_create(
     _run_mutation(
         profile,
         mutations.CREATE_PROCESS_PHASE,
-        {"processId": process_id, "input": _input(locale, attrs, input_json)},
+        _with_input_fields(_input(locale, attrs, input_json), processId=process_id),
+    )
+
+
+@process_app.command("phase-update")
+def process_phase_update(
+    process_id: str,
+    phase_id: str,
+    input_json: str = typer.Option(..., "--input-json", help="Raw UpdateProcessPhaseInput JSON."),
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Update a phase/step when admin API mutations are installed."""
+    _run_mutation(
+        profile,
+        mutations.UPDATE_PROCESS_PHASE,
+        _with_input_fields(_read_json_arg(input_json), processId=process_id, phaseId=phase_id),
+    )
+
+
+@process_app.command("phase-activate")
+def process_phase_activate(
+    process_id: str,
+    phase_id: str,
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Activate a phase/step when admin API mutations are installed."""
+    _run_mutation(
+        profile,
+        mutations.ACTIVATE_PROCESS_PHASE,
+        {"input": {"processId": process_id, "phaseId": phase_id}},
     )
 
 
@@ -663,15 +711,69 @@ def process_component_create(
         "stepSettings": _read_json_arg(step_settings_json) if step_settings_json else None,
     }
     attrs = {key: value for key, value in attrs.items() if value is not None}
-    payload = _read_json_arg(input_json) if input_json else {"attributes": attrs}
+    payload = _input(locale, attrs, input_json)
+    _run_mutation(profile, mutations.CREATE_COMPONENT, _with_input_fields(payload, spaceId=space_id))
+
+@component_app.command("create")
+def component_create(
+    space_id: str,
+    manifest_name: str,
+    name: str,
+    locale: str = typer.Option("en", "--locale"),
+    space_type: Optional[str] = typer.Option(None, "--space-type", help="Participatory space manifest or class."),
+    settings_json: Optional[str] = typer.Option(None, "--settings-json"),
+    default_step_settings_json: Optional[str] = typer.Option(None, "--default-step-settings-json"),
+    step_settings_json: Optional[str] = typer.Option(None, "--step-settings-json"),
+    input_json: Optional[str] = typer.Option(None, "--input-json", help="Raw CreateComponentInput JSON."),
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Create a component under a participatory space when admin API mutations are installed."""
+    attrs = {
+        "manifestName": manifest_name,
+        "name": {locale: name},
+        "settings": _read_json_arg(settings_json) if settings_json else None,
+        "defaultStepSettings": _read_json_arg(default_step_settings_json) if default_step_settings_json else None,
+        "stepSettings": _read_json_arg(step_settings_json) if step_settings_json else None,
+    }
+    attrs = {key: value for key, value in attrs.items() if value is not None}
+    payload = _input(locale, attrs, input_json)
     _run_mutation(
         profile,
         mutations.CREATE_COMPONENT,
-        {"spaceId": space_id, "input": payload},
+        _with_input_fields(payload, spaceId=space_id, spaceType=space_type),
     )
+
+
+@component_app.command("update")
+def component_update(
+    component_id: str,
+    input_json: str = typer.Option(..., "--input-json", help="Raw UpdateComponentInput JSON."),
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Update a component when admin API mutations are installed."""
+    _run_mutation(
+        profile,
+        mutations.UPDATE_COMPONENT,
+        _with_input_fields(_read_json_arg(input_json), componentId=component_id),
+    )
+
+
+@component_app.command("publish")
+def component_publish(
+    component_id: str,
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Publish a component when admin API mutations are installed."""
+    _run_mutation(profile, mutations.PUBLISH_COMPONENT, {"input": {"componentId": component_id}})
+
+
+@component_app.command("unpublish")
+def component_unpublish(
+    component_id: str,
+    profile: str = typer.Option("default", "--profile", "-p"),
+):
+    """Unpublish a component when admin API mutations are installed."""
+    _run_mutation(profile, mutations.UNPUBLISH_COMPONENT, {"input": {"componentId": component_id}})
 
 if __name__ == "__main__":
     app()
-
-
-

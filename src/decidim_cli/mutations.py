@@ -220,9 +220,8 @@ mutation closeDebate($componentId: ID!, $debateId: ID!, $input: CloseDebateInput
 }
 """
 
-# Future/admin API surface. Stock Decidim does not expose these mutations today;
-# the CLI keeps them as first-class commands so a Decidim module or upstream PR
-# can be exercised without changing the agent-facing interface.
+# Admin API surface provided by decidim-admin-api. Stock Decidim does not expose
+# these mutations; install decidim-admin-api in the Decidim app to enable them.
 
 CREATE_PARTICIPATORY_PROCESS = """
 mutation createParticipatoryProcess($input: CreateParticipatoryProcessInput!) {
@@ -235,49 +234,105 @@ mutation createParticipatoryProcess($input: CreateParticipatoryProcessInput!) {
 """
 
 UPDATE_PARTICIPATORY_PROCESS = """
-mutation updateParticipatoryProcess($processId: ID!, $input: UpdateParticipatoryProcessInput!) {
-  participatoryProcess(id: $processId) {
-    update(input: $input) {
-      id
-      slug
-      title { translation(locale: "en") }
-    }
+mutation updateParticipatoryProcess($input: UpdateParticipatoryProcessInput!) {
+  updateParticipatoryProcess(input: $input) {
+    id
+    slug
+    title { translation(locale: "en") }
   }
 }
 """
 
 PUBLISH_PARTICIPATORY_PROCESS = """
-mutation publishParticipatoryProcess($processId: ID!) {
-  participatoryProcess(id: $processId) {
-    publish(input: {}) {
-      id
-      publishedAt
-    }
+mutation publishParticipatoryProcess($input: PublishParticipatoryProcessInput!) {
+  publishParticipatoryProcess(input: $input) {
+    id
+    slug
+    publishedAt
+  }
+}
+"""
+
+UNPUBLISH_PARTICIPATORY_PROCESS = """
+mutation unpublishParticipatoryProcess($input: UnpublishParticipatoryProcessInput!) {
+  unpublishParticipatoryProcess(input: $input) {
+    id
+    slug
   }
 }
 """
 
 CREATE_PROCESS_PHASE = """
-mutation createProcessPhase($processId: ID!, $input: CreateProcessPhaseInput!) {
-  participatoryProcess(id: $processId) {
-    createPhase(input: $input) {
-      id
-      title { translation(locale: "en") }
-      startDate
-      endDate
-    }
+mutation createProcessPhase($input: CreateProcessPhaseInput!) {
+  createProcessPhase(input: $input) {
+    id
+    title { translation(locale: "en") }
+    startDate
+    endDate
+    active
+  }
+}
+"""
+
+UPDATE_PROCESS_PHASE = """
+mutation updateProcessPhase($input: UpdateProcessPhaseInput!) {
+  updateProcessPhase(input: $input) {
+    id
+    title { translation(locale: "en") }
+    startDate
+    endDate
+    active
+  }
+}
+"""
+
+ACTIVATE_PROCESS_PHASE = """
+mutation activateProcessPhase($input: ActivateProcessPhaseInput!) {
+  activateProcessPhase(input: $input) {
+    id
+    active
   }
 }
 """
 
 CREATE_COMPONENT = """
-mutation createComponent($spaceId: ID!, $input: CreateComponentInput!) {
-  participatorySpace(id: $spaceId) {
-    createComponent(input: $input) {
-      id
-      name { translation(locale: "en") }
-      manifestName
-    }
+mutation createComponent($input: CreateComponentInput!) {
+  createComponent(input: $input) {
+    id
+    name { translation(locale: "en") }
+    manifestName
+    publishedAt
+  }
+}
+"""
+
+UPDATE_COMPONENT = """
+mutation updateComponent($input: UpdateComponentInput!) {
+  updateComponent(input: $input) {
+    id
+    name { translation(locale: "en") }
+    manifestName
+    publishedAt
+  }
+}
+"""
+
+PUBLISH_COMPONENT = """
+mutation publishComponent($input: PublishComponentInput!) {
+  publishComponent(input: $input) {
+    id
+    manifestName
+    publishedAt
+  }
+}
+"""
+
+UNPUBLISH_COMPONENT = """
+mutation unpublishComponent($input: UnpublishComponentInput!) {
+  unpublishComponent(input: $input) {
+    id
+    manifestName
+    publishedAt
   }
 }
 """

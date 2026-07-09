@@ -49,3 +49,14 @@ def test_open_data_normalizer(tmp_path: Path):
     assert rows[0]["contribution_type"] == "proposal"
     assert rows[0]["body"] == "Plant trees downtown."
 
+
+
+def test_admin_mutation_inputs_are_relay_shaped():
+    from decidim_cli import mutations
+    from decidim_cli.main import _with_input_fields
+
+    assert "createParticipatoryProcess(input: $input)" in mutations.CREATE_PARTICIPATORY_PROCESS
+    assert "component(id:" not in mutations.CREATE_COMPONENT
+    assert _with_input_fields({"attributes": {"title": "X"}}, processId="7") == {
+        "input": {"attributes": {"title": "X"}, "processId": "7"}
+    }
