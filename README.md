@@ -128,3 +128,35 @@ decidim profile add city https://participate.example.gov --auth bearer --jwt-aud
 - API authentication: https://docs.decidim.org/en/develop/develop/api/authentication
 - Proposal mutations: https://docs.decidim.org/en/develop/develop/api/reference/components/proposals/create
 - Meeting mutations: https://docs.decidim.org/en/develop/develop/api/reference/components/meetings/create
+
+## Install
+
+```bash
+pip install decidim-cli        # command: decidim
+```
+
+## Part of the civic tech agent-bridges toolkit
+
+`decidim-cli` is one bridge in the [civic tech agent-bridges toolkit](https://github.com/deliberAIde/civic-tech-agent-bridges): open-source
+command-line clients that let any AI agent drive a civic-tech platform through its own API, so
+platforms interoperate without waiting for a standards process. Sibling bridges: [polis-cli](https://github.com/deliberAIde/polis-cli) (Pol.is, Voxit), [consul-cli](https://github.com/deliberAIde/consul-cli) (CONSUL DEMOCRACY), [deliberaide-cli](https://pypi.org/project/deliberaide-cli/) (deliberAIde).
+
+## Relationship to upstream
+
+This is an independent client. It contains no Decidim source code and speaks only to the
+documented GraphQL API of a running instance. deliberAIde offers it to the Decidim community for
+adoption; the Apache-2.0 licence is chosen so the code can be vendored into the AGPL-3.0 Decidim
+repositories without friction, since permissive code can be combined into copyleft ones but not
+the other way round.
+
+## Licence
+
+Two licences, because this repository holds two kinds of code:
+
+| Part | Licence | Why |
+|---|---|---|
+| ``src/decidim_cli/`` (the CLI) | Apache-2.0 | Independent client; speaks GraphQL to a running installation and contains no Decidim source code |
+| `decidim-admin-api/` (the Rails engine) | AGPL-3.0-or-later | Loaded into and executed as part of the Decidim application, which is AGPL-3.0 |
+
+See [LICENSE](LICENSE), [NOTICE](NOTICE) and [`decidim-admin-api/LICENSE`](decidim-admin-api/LICENSE).
+Copyright 2026 deliberAIde.
